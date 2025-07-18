@@ -17,43 +17,34 @@ const scene = new THREE.Scene()
 
 // scene.add(mesh)
 
-// const cssRenderer = new CSS3DRenderer()
-// cssRenderer.setSize(window.innerWidth, window.innerHeight)
-// cssRenderer.domElement.style.position = 'absolute'
-// cssRenderer.domElement.style.top = '0'
-// document.body.appendChild(cssRenderer.domElement)
-// // Create iframe
-// const iframe = document.createElement('iframe')
-// iframe.src = 'https://www.youtube.com/embed/d-WlaSwe-Kg' 
-// iframe.title = 'YouTube video player'
-// iframe.style.width = '1024px'
-// iframe.style.height = '768px'
-// iframe.style.border = 'none'
-// iframe.referrerPolicy=''
+const cssRenderer = new CSS3DRenderer()
+cssRenderer.setSize(window.innerWidth,window.innerHeight)
+cssRenderer.domElement.style.position = 'absolute'
+cssRenderer.domElement.style.pointerEvents = 'none'
+document.body.appendChild(cssRenderer.domElement)
+// Create iframe
+const iframe = document.createElement('iframe')
+iframe.src = 'https://humaidportfolio.vercel.app/'
+iframe.style.width = '1920px'
+iframe.style.height = '1080px'
+iframe.style.border = 'none'
 
 
-// iframe.style.pointerEvents = 'none';
 
-// iframe.addEventListener('mouseenter', () => {
-//   iframe.style.pointerEvents = 'auto';
-// })
-// iframe.addEventListener('mouseleave', () => {
-//   iframe.style.pointerEvents = 'none';
-// })
+// Convert iframe to 3D object
+const cssObject = new CSS3DObject(iframe)   // Place it in your scene
+cssObject.scale.set(0.00031, 0.00031, 0.00031) // Scale down appropriately
+cssObject.position.set(0.4,0.3,-0.9)
+scene.add(cssObject)
 
-// // Convert iframe to 3D object
-// const cssObject = new CSS3DObject(iframe)
-// cssObject.position.set(0, 0, 0)     // Place it in your scene
-// cssObject.scale.set(0.0001, 0.0001, 0.0001) // Scale down appropriately
-// scene.add(cssObject)
-
-
+iframe.style.display = 'none'
+iframe.style.pointerEvents = 'auto'
 // Lights
-const ambientLight = new THREE.AmbientLight(0xffffff,5)
+const ambientLight = new THREE.AmbientLight(0xffffff,2)
 scene.add(ambientLight)
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 10)
-dirLight.position.set(3, 5, 2)
+const dirLight = new THREE.DirectionalLight(0xffffff, 2)
+dirLight.position.set(-2, 5, 2)
 scene.add(dirLight)
 
 const loadingBar = document.querySelector('.loading-bar')
@@ -85,17 +76,36 @@ const gltfLoader = new GLTFLoader(loadingManager)
 let cosmo = null
 
 gltfLoader.load(
-  '/static/models/untitled.glb',
+  '/static/models/room.glb',
   (gltf) => {
     console.log("loaded")
     cosmo = gltf.scene
     scene.add(cosmo)
+    console.log("room",cosmo)
   },
   (progress) => {
     console.log("loading")
   },
   (error) => {
     console.log(error)
+  }
+)
+
+let screen = null
+
+gltfLoader.load(
+  '/static/models/screen.glb',
+  (gltf) => {
+    console.log("loaded")
+    screen = gltf.scene
+    screen.position.set(0.6,0,-0.8)
+    // cssObject.scale.set(0.00031, 0.00031, 0.00031) // Scale down appropriately
+    // cssObject.position.set(0.4,0.3,-0.9)
+    // screen.add(cssObject)
+    
+    scene.add(screen)
+    console.log("screen",screen)
+    
   }
 )
 
@@ -164,7 +174,7 @@ window.addEventListener('resize', () => {
     
     camera.aspect = sizes.width / sizes.height
     camera.updateProjectionMatrix()
-
+    cssRenderer.setSize(sizes.width, sizes.height)
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio,2))
 
@@ -205,7 +215,6 @@ stats.showPanel(0) // fps
 document.body.appendChild(stats.dom)
 
 
-			
 
 const tick = () => {
   
@@ -213,45 +222,73 @@ const tick = () => {
 
   controls.update()
   renderer.render(scene, camera)
-  // cssRenderer.render(scene, camera) 
+
+  
+    cssRenderer.render(scene, camera) 
+  
   // check intersection
   raycaster.setFromCamera(mouse,camera)
 
-  if(cosmo) {
-     const intersect = raycaster.intersectObject(cosmo)
+  if(screen) {
+     const intersect = raycaster.intersectObject(screen)
 
-     // mouse enter
-  if(intersect.length) {
-    
-    if(!currentIntersect) {
-      console.log('mouse enter')
+      // mouse enter
+    if(intersect.length) {
+      
+      if(!currentIntersect) {
+        console.log('mouse enter')
+      }
+
+      currentIntersect = intersect[0]
+     
     }
+    else {
 
-    currentIntersect = intersect[0]
-  }
-  else {
+      if(currentIntersect) {
+        console.log('mouse leave')
+      }
 
-    if(currentIntersect) {
-      console.log('mouse leave')
+      currentIntersect = null
     }
-
-    currentIntersect = null
-  }
   }
  
-  
-  
-
   stats.end()
   window.requestAnimationFrame(tick)
 }
 
+let lookAt = false
 window.addEventListener('click', () => {
   if(currentIntersect) {
+    cssRenderer.domElement.style.pointerEvents = 'auto'
+    iframe.style.pointerEvents = 'auto'
+
     console.log('clicked')
+    console.log(currentIntersect)
+    lookAt = true
+    controls.saveState()
+    //camera.position.set(0,-1,3)
+    controls.target.set(0.6,0.3,-0.8)
+    controls.minDistance = 0.2
+    controls.maxDistance = 0.3
+    controls.enabled = false
+    
+     controls.update()
+    
+
+    //camera.rotation.set(90,45,0)
+   
+  }
+  else if(lookAt === true && !currentIntersect){
+    lookAt = false
+    controls.minDistance = 0
+    controls.maxDistance = 2
+    controls.target.set(0,0,0)
+    cssRenderer.domElement.style.pointerEvents = 'none'
+    //iframe.style.pointerEvents = 'none'
+    controls.enabled = true
+  
   }
 })
-
 
 
 tick()
