@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { gsap } from 'gsap'
 import Stats from 'stats.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js' 
-
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 
@@ -21,25 +21,42 @@ const cssRenderer = new CSS3DRenderer()
 cssRenderer.setSize(window.innerWidth,window.innerHeight)
 cssRenderer.domElement.style.position = 'absolute'
 cssRenderer.domElement.style.pointerEvents = 'none'
+
+
 document.body.appendChild(cssRenderer.domElement)
-// Create iframe
+const wrapper = document.createElement('div')
+wrapper.style.width = '1920px'
+wrapper.style.height = '1080px'
+wrapper.style.overflow = 'hidden'
+wrapper.style.position = 'relative'
+wrapper.style.zIndex = '9999'
+
 const iframe = document.createElement('iframe')
 iframe.src = 'https://humaidportfolio.vercel.app/'
-iframe.style.width = '1920px'
-iframe.style.height = '1080px'
+iframe.style.width = '100%'
+iframe.style.height = '100%'
 iframe.style.border = 'none'
+iframe.style.pointerEvents = 'auto'
+iframe.style.transform = 'translateZ(0)'
+iframe.style.willChange = 'transform'
+iframe.style.backfaceVisibility = 'hidden'
 
+wrapper.appendChild(iframe)
 
-
-// Convert iframe to 3D object
-const cssObject = new CSS3DObject(iframe)   // Place it in your scene
-cssObject.scale.set(0.00031, 0.00031, 0.00031) // Scale down appropriately
-cssObject.position.set(0.4,0.3,-0.9)
+const cssObject = new CSS3DObject(wrapper)
+cssObject.position.set(0.4,0.3,0.1)
+cssObject.scale.set(0.0003, 0.0003, 0.0003)
 scene.add(cssObject)
 
-iframe.style.display = 'none'
-iframe.style.pointerEvents = 'auto'
 // Lights
+const rgbeLoader = new RGBELoader()
+rgbeLoader.load('/static/en_suite_1k.hdr', (envMap) => {
+  envMap.mapping = THREE.EquirectangularReflectionMapping
+  
+  scene.environment = envMap
+  scene.environmentIntensity = 0.5
+  
+})
 const ambientLight = new THREE.AmbientLight(0xffffff,2)
 scene.add(ambientLight)
 
@@ -80,6 +97,7 @@ gltfLoader.load(
   (gltf) => {
     console.log("loaded")
     cosmo = gltf.scene
+    cosmo.position.set(0,0,1)
     scene.add(cosmo)
     console.log("room",cosmo)
   },
@@ -98,7 +116,8 @@ gltfLoader.load(
   (gltf) => {
     console.log("loaded")
     screen = gltf.scene
-    screen.position.set(0.6,0,-0.8)
+    screen.position.set(0.6,0,0.2)
+    //screen.position.set(0,0,0)
     // cssObject.scale.set(0.00031, 0.00031, 0.00031) // Scale down appropriately
     // cssObject.position.set(0.4,0.3,-0.9)
     // screen.add(cssObject)
@@ -144,16 +163,16 @@ const overlay = new THREE.Mesh(overlayGeo, overlayMaterial)
 scene.add(overlay)
 
 // Camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height)
-camera.position.z = 1
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height)
+camera.position.set(1,0.3,10)
 
 scene.add(camera)
 
 // controls
 const controls = new OrbitControls(camera,canvas)
 controls.enableDamping = true
-controls.minDistance = 0
-controls.maxDistance = 2
+controls.minDistance = 0.9
+controls.maxDistance = 3.5
 controls.minAzimuthAngle = -Math.PI / 4
 controls.maxAzimuthAngle = Math.PI / 4
 controls.maxPolarAngle = Math.PI / 2
@@ -259,18 +278,26 @@ const tick = () => {
 let lookAt = false
 window.addEventListener('click', () => {
   if(currentIntersect) {
-    cssRenderer.domElement.style.pointerEvents = 'auto'
+
     iframe.style.pointerEvents = 'auto'
 
     console.log('clicked')
     console.log(currentIntersect)
     lookAt = true
     controls.saveState()
-    //camera.position.set(0,-1,3)
-    controls.target.set(0.6,0.3,-0.8)
-    controls.minDistance = 0.2
-    controls.maxDistance = 0.3
-    controls.enabled = false
+   
+    // const targetPos = currentIntersect.object.position
+    // const offset = new THREE.Vector3(0,0.3,1)
+    // const worldDir = offset.applyQuaternion(currentIntersect.object.quaternion)
+    // const cameraPos = targetPos.clone().add(worldDir);
+    camera.position.set(0,0.4,1)
+    //camera.quaternion.set(2.4,-0.01,-4.34)
+    //camera.lookAt(targetPos)
+    //controls.target.copy(targetPos)
+
+    controls.minDistance = 0.8
+    controls.maxDistance = 1
+    // controls.enabled = false
     
      controls.update()
     
