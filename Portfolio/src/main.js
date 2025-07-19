@@ -10,12 +10,6 @@ import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
-// Geo 
-// const geometry = new THREE.BoxGeometry(1, 1, 1)
-// const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
-// const mesh = new THREE.Mesh(geometry, material)
-
-// scene.add(mesh)
 
 const cssRenderer = new CSS3DRenderer()
 cssRenderer.setSize(window.innerWidth,window.innerHeight)
@@ -44,13 +38,13 @@ iframe.style.backfaceVisibility = 'hidden'
 wrapper.appendChild(iframe)
 
 const cssObject = new CSS3DObject(wrapper)
-cssObject.position.set(0.4,0.3,0.1)
+cssObject.position.set(0.65,0.3,-0.1)
 cssObject.scale.set(0.0003, 0.0003, 0.0003)
 scene.add(cssObject)
 
 // Lights
 const rgbeLoader = new RGBELoader()
-rgbeLoader.load('/static/en_suite_1k.hdr', (envMap) => {
+rgbeLoader.load('/static/envMap.hdr', (envMap) => {
   envMap.mapping = THREE.EquirectangularReflectionMapping
   
   scene.environment = envMap
@@ -128,6 +122,32 @@ gltfLoader.load(
   }
 )
 
+let leaves = null
+gltfLoader.load(
+  '/static/models/leaves.glb',
+  (gltf) => {
+    console.log("loaded")
+    leaves = gltf.scene
+ 
+        
+        leaves.traverse((child) => {
+          if(child.isMesh) {
+             child.material.transparent = false
+            //child.material.opacity = 1
+            //child.material.depthWrite = false
+            //child.material.depthTest = true
+            child.renderOrder = 1
+           child.material.alphaTest = 0.5
+          }
+          
+        })
+      
+    leaves.position.set(0,0,1)
+    scene.add(leaves)
+    console.log("leaves", leaves)
+  }
+)
+
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
@@ -163,24 +183,32 @@ const overlay = new THREE.Mesh(overlayGeo, overlayMaterial)
 scene.add(overlay)
 
 // Camera
-const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height)
+const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height,0.001,1000)
 camera.position.set(1,0.3,10)
 
 scene.add(camera)
 
 // controls
 const controls = new OrbitControls(camera,canvas)
-controls.enableDamping = true
-controls.minDistance = 0.9
-controls.maxDistance = 3.5
-controls.minAzimuthAngle = -Math.PI / 4
-controls.maxAzimuthAngle = Math.PI / 4
-controls.maxPolarAngle = Math.PI / 2
-controls.rotateSpeed = 0.5
+
+const setControls  = () => {
+  controls.enableDamping = true
+  controls.minDistance = 0.9
+  controls.maxDistance = 3.5
+  controls.target.set(0,0,0)
+  controls.enabled = true
+  controls.minAzimuthAngle = -Math.PI / 4
+  controls.maxAzimuthAngle = Math.PI / 4
+  controls.maxPolarAngle = Math.PI / 2
+  controls.rotateSpeed = 0.5
+}
+
+setControls()
 
 // Renderer
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    antialias: true
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.render(scene, camera)
@@ -307,12 +335,10 @@ window.addEventListener('click', () => {
   }
   else if(lookAt === true && !currentIntersect){
     lookAt = false
-    controls.minDistance = 0
-    controls.maxDistance = 2
-    controls.target.set(0,0,0)
+    setControls()
     cssRenderer.domElement.style.pointerEvents = 'none'
     //iframe.style.pointerEvents = 'none'
-    controls.enabled = true
+   
   
   }
 })
