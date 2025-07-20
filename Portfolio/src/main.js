@@ -212,17 +212,26 @@ window.addEventListener('resize', () => {
 
 })
 
-// Fullscreen
+// function setResponsiveZoom() {
+//   if (window.matchMedia("(max-width: 600px)").matches) {
+//     controls.minDistance = 1.2;
+//     controls.maxDistance = 4;
+//     console.log('ok')
+//   }
+//   else if (window.matchMedia("(max-width: 1100px)").matches) {
+//     controls.minDistance = 0.9;
+//     controls.maxDistance = 3.5;
+//   }
+//   else {
+//     controls.minDistance = 0.5;
+//     controls.maxDistance = 0.6;
+//   }
+//   controls.update();
+// }
 
-window.addEventListener('dblclick', () => {
-  if(!document.fullscreenElement) {
-    canvas.requestFullscreen()
-  }
-  else {
-    document.exitFullscreen()
-  }
+// window.addEventListener('resize', setResponsiveZoom);
+// setResponsiveZoom(); 
 
-})
 
 // Raycaster
 const raycaster = new THREE.Raycaster()
@@ -298,7 +307,20 @@ window.addEventListener('click', () => {
 
     const targetPosition = objectPosition.clone().add(offset)
 
-    controls.minDistance = 0.5
+    if (window.matchMedia("(max-width: 550px)").matches){
+      controls.minDistance = 1.3
+    }
+    else if (window.matchMedia("(max-width: 750px)").matches){
+      controls.minDistance = 1
+    }
+    else if(window.matchMedia("(max-width: 1100px)").matches){
+       controls.minDistance = 0.8
+    }
+    else{
+       controls.minDistance = 0.5
+       console.log('big')
+    }
+   
     
     gsap.to(camera.position, {
       x: targetPosition.x,
