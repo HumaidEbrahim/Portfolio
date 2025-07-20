@@ -29,6 +29,8 @@ cssObject.position.set(0.69,0.305,-0.1)
 cssObject.scale.set(0.00028, 0.00027, 0.00027)
 scene.add(cssObject)
 iframe.style.visibility = 'hidden'
+iframe.style.overflow = 'visible';
+cssRenderer.domElement.style.overflow = 'visible';
 // Lights
 const rgbeLoader = new RGBELoader()
 rgbeLoader.load('/static/envMap.hdr', (envMap) => {
