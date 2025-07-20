@@ -16,32 +16,19 @@ cssRenderer.setSize(window.innerWidth,window.innerHeight)
 cssRenderer.domElement.style.position = 'absolute'
 cssRenderer.domElement.style.pointerEvents = 'none'
 
-
 document.body.appendChild(cssRenderer.domElement)
-const wrapper = document.createElement('div')
-wrapper.style.width = '1920px'
-wrapper.style.height = '1080px'
-wrapper.style.overflow = 'hidden'
-wrapper.style.position = 'relative'
-wrapper.style.zIndex = '9999'
 
 const iframe = document.createElement('iframe')
 iframe.src = 'https://humaidportfolio.vercel.app/'
 iframe.style.width = '100%'
 iframe.style.height = '100%'
 iframe.style.border = 'none'
-iframe.style.pointerEvents = 'auto'
-iframe.style.transform = 'translateZ(0)'
-iframe.style.willChange = 'transform'
-iframe.style.backfaceVisibility = 'hidden'
 
-wrapper.appendChild(iframe)
-
-const cssObject = new CSS3DObject(wrapper)
+const cssObject = new CSS3DObject(iframe)
 cssObject.position.set(0.65,0.3,-0.1)
 cssObject.scale.set(0.0003, 0.0003, 0.0003)
 scene.add(cssObject)
-
+iframe.style.visibility = 'hidden'
 // Lights
 const rgbeLoader = new RGBELoader()
 rgbeLoader.load('/static/envMap.hdr', (envMap) => {
@@ -109,13 +96,11 @@ gltfLoader.load(
   '/static/models/screen.glb',
   (gltf) => {
     console.log("loaded")
-    screen = gltf.scene
-    screen.position.set(0.6,0,0.2)
-    //screen.position.set(0,0,0)
-    // cssObject.scale.set(0.00031, 0.00031, 0.00031) // Scale down appropriately
-    // cssObject.position.set(0.4,0.3,-0.9)
-    // screen.add(cssObject)
-    
+    screen = gltf.scene.children[0]
+    console.log(screen)
+    screen.position.set(0.69,0.3,-0.145)
+    screen.po
+
     scene.add(screen)
     console.log("screen",screen)
     
@@ -202,7 +187,7 @@ const setControls  = () => {
   controls.maxPolarAngle = Math.PI / 2
   controls.rotateSpeed = 0.5
 }
-
+controls.zoomToCursor = true
 setControls()
 
 // Renderer
@@ -241,10 +226,6 @@ window.addEventListener('dblclick', () => {
 
 // Raycaster
 const raycaster = new THREE.Raycaster()
-// const rayOrigin = new THREE.Vector3(-3,0,0)
-// const rayDirection = new THREE.Vector3(10,0,0)
-// rayDirection.normalize()
-
 //mouse
 
 const mouse = new THREE.Vector2()
@@ -261,7 +242,8 @@ var stats = new Stats()
 stats.showPanel(0) // fps
 document.body.appendChild(stats.dom)
 
-
+const interactables = [screen]
+let lookAtScreen = false
 
 const tick = () => {
   
@@ -269,10 +251,8 @@ const tick = () => {
 
   controls.update()
   renderer.render(scene, camera)
+  cssRenderer.render(scene, camera) 
 
-  
-    cssRenderer.render(scene, camera) 
-  
   // check intersection
   raycaster.setFromCamera(mouse,camera)
 
@@ -287,6 +267,7 @@ const tick = () => {
       }
 
       currentIntersect = intersect[0]
+    
      
     }
     else {
@@ -303,44 +284,46 @@ const tick = () => {
   window.requestAnimationFrame(tick)
 }
 
-let lookAt = false
+
+
 window.addEventListener('click', () => {
-  if(currentIntersect) {
+  if (currentIntersect && currentIntersect.object.name === 'Cube011_1') {
+    console.log('clicked screen')
 
-    iframe.style.pointerEvents = 'auto'
+    const objectPosition = new THREE.Vector3()
+    currentIntersect.object.getWorldPosition(objectPosition)
 
-    console.log('clicked')
-    console.log(currentIntersect)
-    lookAt = true
-    controls.saveState()
-   
-    // const targetPos = currentIntersect.object.position
-    // const offset = new THREE.Vector3(0,0.3,1)
-    // const worldDir = offset.applyQuaternion(currentIntersect.object.quaternion)
-    // const cameraPos = targetPos.clone().add(worldDir);
-    camera.position.set(0,0.4,1)
-    //camera.quaternion.set(2.4,-0.01,-4.34)
-    //camera.lookAt(targetPos)
-    //controls.target.copy(targetPos)
+    const offset = new THREE.Vector3(0, 0, 0.1)
+    offset.applyQuaternion(currentIntersect.object.quaternion)
 
-    controls.minDistance = 0.8
-    controls.maxDistance = 1
-    // controls.enabled = false
+    const targetPosition = objectPosition.clone().add(offset)
+
+    controls.minDistance = 0.5
     
-     controls.update()
-    
-
-    //camera.rotation.set(90,45,0)
-   
-  }
-  else if(lookAt === true && !currentIntersect){
-    lookAt = false
-    setControls()
-    cssRenderer.domElement.style.pointerEvents = 'none'
-    //iframe.style.pointerEvents = 'none'
-   
+    gsap.to(camera.position, {
+      x: targetPosition.x,
+      y: targetPosition.y,
+      z: targetPosition.z,
+      duration: 1,
+      //onUpdate: () => controls.update(),
+      onComplete: () => {
+        controls.enabled = false
   
+      }
+    });
+
+   controls.target.copy(objectPosition);
+    controls.update();
+    lookAtScreen = true;
+    iframe.style.visibility = ''
   }
+
+  else if(!currentIntersect && lookAtScreen){
+      // reset controls
+      lookAtScreen =  false
+      iframe.style.visibility = 'hidden'
+      setControls()
+    }
 })
 
 
