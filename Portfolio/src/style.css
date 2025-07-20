@@ -11,12 +11,6 @@
     left: 0;
 }
 
-html,
-body
-{
-    overflow: hidden;
-}
-
 .loading-bar
 {
     position: absolute;
