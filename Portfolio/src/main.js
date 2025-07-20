@@ -20,13 +20,13 @@ document.body.appendChild(cssRenderer.domElement)
 
 const iframe = document.createElement('iframe')
 iframe.src = 'https://humaidportfolio.vercel.app/'
-iframe.style.width = '100%'
-iframe.style.height = '100%'
+iframe.style.width = '1920px'
+iframe.style.height = '1080px'
 iframe.style.border = 'none'
 
 const cssObject = new CSS3DObject(iframe)
-cssObject.position.set(0.65,0.3,-0.1)
-cssObject.scale.set(0.0003, 0.0003, 0.0003)
+cssObject.position.set(0.69,0.305,-0.1)
+cssObject.scale.set(0.00028, 0.00027, 0.00027)
 scene.add(cssObject)
 iframe.style.visibility = 'hidden'
 // Lights
