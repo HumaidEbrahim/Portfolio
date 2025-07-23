@@ -19,7 +19,7 @@ cssRenderer.domElement.style.pointerEvents = 'none'
 document.body.appendChild(cssRenderer.domElement)
 
 const iframe = document.createElement('iframe')
-iframe.src = 'humaidcv.vercel.app'
+iframe.src = 'https://humaidsportfolio.vercel.app/'
 iframe.style.width = '1920px'
 iframe.style.height = '1080px'
 iframe.style.border = 'none'
