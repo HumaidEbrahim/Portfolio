@@ -45,9 +45,16 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 2)
 scene.add(ambientLight)
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 2)
-dirLight.position.set(-2, 5, 2)
+dirLight.position.set(-2, 5, 0)
 scene.add(dirLight)
 
+const lamp = new THREE.PointLight(0xFFF3DA,1,1)
+lamp.position.set(0.69, 0.3, -0.145)
+scene.add(lamp)
+
+const leds = new THREE.RectAreaLight(0xff8400,20,3,0.2)
+leds.position.set(0.69, 1.2, -0.16)
+scene.add(leds)
 const loadingBar = document.querySelector('.loading-bar')
 
 const loadingManager = new THREE.LoadingManager(
