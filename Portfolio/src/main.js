@@ -5,6 +5,7 @@ import Stats from 'stats.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { cos } from 'three/src/nodes/TSL.js'
 
 
 const canvas = document.querySelector('canvas.webgl')
@@ -25,8 +26,8 @@ iframe.style.height = '1080px'
 iframe.style.border = 'none'
 
 const cssObject = new CSS3DObject(iframe)
-cssObject.position.set(0.69, 0.305, -0.1)
-cssObject.scale.set(0.00028, 0.00027, 0.00027)
+cssObject.position.set(0.687, 0.306, -0.21)
+cssObject.scale.set(0.000305, 0.0003, 0.000305)
 scene.add(cssObject)
 iframe.style.visibility = 'hidden'
 iframe.style.overflow = 'visible';
@@ -44,16 +45,18 @@ rgbeLoader.load('/static/envMap.hdr', (envMap) =>
 const ambientLight = new THREE.AmbientLight(0xffffff, 2)
 scene.add(ambientLight)
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 2)
-dirLight.position.set(-2, 5, 0)
-scene.add(dirLight)
+// const dirLight = new THREE.DirectionalLight(0xffffff, 2)
+// dirLight.position.set(-2, 5, 0)
+// scene.add(dirLight)
 
-const lamp = new THREE.PointLight(0xFFF3DA,1,1)
-lamp.position.set(0.69, 0.3, -0.145)
+const lamp = new THREE.PointLight(0xF7C57C,1,1)
+lamp.position.set(0.69, 0.3, -0.3)
+
 scene.add(lamp)
 
 const leds = new THREE.RectAreaLight(0xff8400,20,3,0.2)
 leds.position.set(0.69, 1.2, -0.16)
+
 scene.add(leds)
 const loadingBar = document.querySelector('.loading-bar')
 
@@ -85,17 +88,36 @@ const loadingManager = new THREE.LoadingManager(
 // Models
 const gltfLoader = new GLTFLoader(loadingManager)
 
-let cosmo = null
-
+let room = null
+let screen = null
+let alphas = null
+let chair = null
+let interactables = null
 gltfLoader.load(
   '/static/models/room.glb',
   (gltf) =>
   {
     console.log("loaded")
-    cosmo = gltf.scene
-    cosmo.position.set(0, 0, 1)
-    scene.add(cosmo)
-    console.log("room", cosmo)
+    room = gltf.scene
+    screen = gltf.scene.getObjectByName('Screen')
+    alphas = gltf.scene.getObjectByName('Alphas')
+    chair = gltf.scene.getObjectByName('Chair')
+    chair = chair.children[2]
+    interactables = [screen,chair]
+    alphas.traverse((child) =>
+    {
+      if (child.isMesh)
+      {
+        child.material.transparent = false
+        child.renderOrder = 1
+        child.material.alphaTest = 0.5
+      }
+    })
+
+    console.log(chair)
+    room.position.set(0, 0, 1)
+    scene.add(room)
+    console.log("room", room)
   },
   (progress) =>
   {
@@ -107,52 +129,6 @@ gltfLoader.load(
   }
 )
 
-let screen = null
-
-gltfLoader.load(
-  '/static/models/screen.glb',
-  (gltf) =>
-  {
-    console.log("loaded")
-    screen = gltf.scene.children[0]
-    console.log(screen)
-    screen.position.set(0.69, 0.3, -0.145)
-    screen.po
-
-    scene.add(screen)
-    console.log("screen", screen)
-
-  }
-)
-
-let leaves = null
-gltfLoader.load(
-  '/static/models/leaves.glb',
-  (gltf) =>
-  {
-    console.log("loaded")
-    leaves = gltf.scene
-
-
-    leaves.traverse((child) =>
-    {
-      if (child.isMesh)
-      {
-        child.material.transparent = false
-        //child.material.opacity = 1
-        //child.material.depthWrite = false
-        //child.material.depthTest = true
-        child.renderOrder = 1
-        child.material.alphaTest = 0.5
-      }
-
-    })
-
-    leaves.position.set(0, 0, 1)
-    scene.add(leaves)
-    console.log("leaves", leaves)
-  }
-)
 
 const sizes = {
   width: window.innerWidth,
@@ -271,17 +247,17 @@ window.addEventListener('mousemove', (event) =>
 
 let currentIntersect = null
 
-var stats = new Stats()
-stats.showPanel(0) // fps
-document.body.appendChild(stats.dom)
+// var stats = new Stats()
+// stats.showPanel(0) // fps
+// document.body.appendChild(stats.dom)
 
-const interactables = [screen]
+
 let lookAtScreen = false
 
 const tick = () =>
 {
 
-  stats.begin()
+  // stats.begin()
 
   controls.update()
   renderer.render(scene, camera)
@@ -292,7 +268,7 @@ const tick = () =>
 
   if (screen)
   {
-    const intersect = raycaster.intersectObject(screen)
+    const intersect = raycaster.intersectObjects(interactables)
 
     // mouse enter
     if (intersect.length)
@@ -304,7 +280,6 @@ const tick = () =>
       }
 
       currentIntersect = intersect[0]
-
 
     }
     else
@@ -319,15 +294,15 @@ const tick = () =>
     }
   }
 
-  stats.end()
+  // stats.end()
   window.requestAnimationFrame(tick)
 }
 
 
-
+// click on interactable object
 window.addEventListener('click', () =>
 {
-  if (currentIntersect && currentIntersect.object.name === 'Cube011_1')
+  if (currentIntersect && currentIntersect.object.name === 'Screen')
   {
     console.log('clicked screen')
 
@@ -339,31 +314,18 @@ window.addEventListener('click', () =>
 
     const targetPosition = objectPosition.clone().add(offset)
 
-    if (window.matchMedia("(max-width: 550px)").matches)
-    {
-      controls.minDistance = 1.3
-    }
-    else if (window.matchMedia("(max-width: 750px)").matches)
-    {
-      controls.minDistance = 1
-    }
-    else if (window.matchMedia("(max-width: 1100px)").matches)
-    {
-      controls.minDistance = 0.8
-    }
-    else
-    {
-      controls.minDistance = 0.5
-      console.log('big')
-    }
+    // if (window.matchMedia("(max-width: 550px)").matches)
+    // {
+    //   controls.minDistance = 0.7
+    // }
 
-
+    controls.minDistance = 0.5
     gsap.to(camera.position, {
       x: targetPosition.x,
       y: targetPosition.y,
       z: targetPosition.z,
       duration: 1,
-      //onUpdate: () => controls.update(),
+      onUpdate: () => controls.update(),
       onComplete: () =>
       {
         controls.enabled = false
@@ -382,8 +344,12 @@ window.addEventListener('click', () =>
     // reset controls
     lookAtScreen = false
     iframe.style.visibility = 'hidden'
+
     setControls()
+    controls.update
   }
+
+
 })
 
 
