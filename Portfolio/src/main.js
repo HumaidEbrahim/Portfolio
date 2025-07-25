@@ -314,12 +314,14 @@ window.addEventListener('click', () =>
 
     const targetPosition = objectPosition.clone().add(offset)
 
-    // if (window.matchMedia("(max-width: 550px)").matches)
-    // {
-    //   controls.minDistance = 0.7
-    // }
-
+    if (window.matchMedia("(max-width: 550px)").matches)
+    {
+      controls.minDistance = 0.7
+    }
+    else{
+      
     controls.minDistance = 0.5
+    }
     gsap.to(camera.position, {
       x: targetPosition.x,
       y: targetPosition.y,
