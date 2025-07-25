@@ -348,6 +348,7 @@ window.addEventListener('click', () =>
     iframe.style.visibility = 'hidden'
 
     setControls()
+    controls.enabled = true
     controls.update
   }
 
